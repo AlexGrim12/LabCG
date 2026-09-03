@@ -17,9 +17,9 @@
 
 - **Número de cuenta:** 320282098
 
-- **Grupo de laboratorio:** [Grupo]
+- **Grupo de laboratorio:** 13
 
-- **Grupo de teoría:** [Grupo]
+- **Grupo de teoría:** 1
 
 - **Semestre:** 2027-1
 
