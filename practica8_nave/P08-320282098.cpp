@@ -3,7 +3,7 @@ Practica 8: Iluminacion 2 - nave espacial con luces y motores de plasma
 - Nave importada flotando, con 1 luz puntual y 1 spotlight unidos a ella
 - Cada motor tiene una textura de plasma azul y una luz puntual azul en su posicion
 Teclas:
-  L: prender/apagar al mismo tiempo la luz puntual y el spotlight de la nave
+  L: prender/apagar al mismo tiempo la luz puntual y el spotlight de la nave (parpadean en ambar, como las intermitentes de un coche)
   1: motor 1 (luz azul + fuego)   2: motor 2 (luz azul + fuego)
   WASD y mouse: camara   Esc: salir
 */
@@ -33,12 +33,13 @@ Teclas:
 #include "Luces.h"
 
 Window mainWindow;
-std::vector<MeshModel*> meshListModel; // [0] piso, [1] llama (dos planos cruzados)
+std::vector<MeshModel*> meshListModel; // [0] piso, [1] llama (dos planos cruzados), [2] cubo (lampara)
 std::vector<Shader> shaderList;        // [0] con luces, [1] sin luces (para el fuego)
 Camera camera;
 
 Texture pisoTexture;
 Texture fuegoTexture;
+Texture plainTexture;
 
 Model Nave_M;
 Skybox skybox;
@@ -84,7 +85,41 @@ void CreateObjects()
 	MeshModel* llama = new MeshModel();
 	llama->CreateMeshModel(llamaVertices, llamaIndices, 64, 12);
 	meshListModel.push_back(llama);
-}
+
+	//cubo pequeno: lampara ambar de la nave (normales hacia adentro, como el curso)
+	unsigned int cuboIndices[] = {
+		0, 1, 2,  2, 3, 0,   4, 5, 6,  6, 7, 4,   8, 9, 10,  10, 11, 8,
+		12, 13, 14,  14, 15, 12,   16, 17, 18,  18, 19, 16,   20, 21, 22,  22, 23, 20
+	};
+	GLfloat cuboVertices[] = {
+		-0.5f, -0.5f,  0.5f,	0.0f, 0.0f,	0.0f, 0.0f, -1.0f,
+		 0.5f, -0.5f,  0.5f,	1.0f, 0.0f,	0.0f, 0.0f, -1.0f,
+		 0.5f,  0.5f,  0.5f,	1.0f, 1.0f,	0.0f, 0.0f, -1.0f,
+		-0.5f,  0.5f,  0.5f,	0.0f, 1.0f,	0.0f, 0.0f, -1.0f,
+		 0.5f, -0.5f,  0.5f,	0.0f, 0.0f,	-1.0f, 0.0f, 0.0f,
+		 0.5f, -0.5f, -0.5f,	1.0f, 0.0f,	-1.0f, 0.0f, 0.0f,
+		 0.5f,  0.5f, -0.5f,	1.0f, 1.0f,	-1.0f, 0.0f, 0.0f,
+		 0.5f,  0.5f,  0.5f,	0.0f, 1.0f,	-1.0f, 0.0f, 0.0f,
+		-0.5f, -0.5f, -0.5f,	0.0f, 0.0f,	0.0f, 0.0f, 1.0f,
+		 0.5f, -0.5f, -0.5f,	1.0f, 0.0f,	0.0f, 0.0f, 1.0f,
+		 0.5f,  0.5f, -0.5f,	1.0f, 1.0f,	0.0f, 0.0f, 1.0f,
+		-0.5f,  0.5f, -0.5f,	0.0f, 1.0f,	0.0f, 0.0f, 1.0f,
+		-0.5f, -0.5f, -0.5f,	0.0f, 0.0f,	1.0f, 0.0f, 0.0f,
+		-0.5f, -0.5f,  0.5f,	1.0f, 0.0f,	1.0f, 0.0f, 0.0f,
+		-0.5f,  0.5f,  0.5f,	1.0f, 1.0f,	1.0f, 0.0f, 0.0f,
+		-0.5f,  0.5f, -0.5f,	0.0f, 1.0f,	1.0f, 0.0f, 0.0f,
+		-0.5f, -0.5f,  0.5f,	0.0f, 0.0f,	0.0f, 1.0f, 0.0f,
+		 0.5f, -0.5f,  0.5f,	1.0f, 0.0f,	0.0f, 1.0f, 0.0f,
+		 0.5f, -0.5f, -0.5f,	1.0f, 1.0f,	0.0f, 1.0f, 0.0f,
+		-0.5f, -0.5f, -0.5f,	0.0f, 1.0f,	0.0f, 1.0f, 0.0f,
+		-0.5f,  0.5f,  0.5f,	0.0f, 0.0f,	0.0f, -1.0f, 0.0f,
+		 0.5f,  0.5f,  0.5f,	1.0f, 0.0f,	0.0f, -1.0f, 0.0f,
+		 0.5f,  0.5f, -0.5f,	1.0f, 1.0f,	0.0f, -1.0f, 0.0f,
+		-0.5f,  0.5f, -0.5f,	0.0f, 1.0f,	0.0f, -1.0f, 0.0f
+	};
+	MeshModel* cubo = new MeshModel();
+	cubo->CreateMeshModel(cuboVertices, cuboIndices, 192, 36);
+	meshListModel.push_back(cubo);}
 
 void CreateShaders()
 {
@@ -111,6 +146,8 @@ int main()
 	pisoTexture.LoadTextureA();
 	fuegoTexture = Texture("Textures/fuego_azul.png");
 	fuegoTexture.LoadTextureA();
+	plainTexture = Texture("Textures/plain.png");
+	plainTexture.LoadTextureA();
 
 	Nave_M = Model();
 	Nave_M.LoadModel("Models/nave_espacial.obj");
@@ -128,9 +165,9 @@ int main()
 	//direccion = hacia donde viaja la luz
 	mainLight = DirectionalLight(0.75f, 0.82f, 1.0f, 0.30f, 0.20f, 0.3f, -1.0f, -0.4f);
 	//PointLight(color, ambiente, difusa, posicion, atenuacion)
-	luzNave = PointLight(1.0f, 0.92f, 0.75f, 0.0f, 2.2f, 0.0f, 0.0f, 0.0f, 1.0f, 0.09f, 0.032f);
+	luzNave = PointLight(1.0f, 0.62f, 0.0f, 0.0f, 2.2f, 0.0f, 0.0f, 0.0f, 1.0f, 0.09f, 0.032f);
 	//SpotLight(color, ambiente, difusa, posicion, direccion, atenuacion, angulo del cono)
-	spotNave = SpotLight(1.0f, 1.0f, 0.90f, 0.0f, 6.0f, 0.0f, 0.0f, 0.0f, 0.0f, -0.75f, 0.66f, 1.0f, 0.02f, 0.004f, 30.0f);
+	spotNave = SpotLight(1.0f, 0.62f, 0.0f, 0.0f, 6.0f, 0.0f, 0.0f, 0.0f, 0.0f, -0.75f, 0.66f, 1.0f, 0.02f, 0.004f, 30.0f);
 	luzMotor1 = PointLight(0.25f, 0.50f, 1.0f, 0.0f, 3.5f, 0.0f, 0.0f, 0.0f, 1.0f, 0.09f, 0.05f);
 	luzMotor2 = PointLight(0.25f, 0.50f, 1.0f, 0.0f, 3.5f, 0.0f, 0.0f, 0.0f, 1.0f, 0.09f, 0.05f);
 	materialBrillante = Material(0.5f, 16.0f);
@@ -211,15 +248,18 @@ int main()
 		//Solo las luces encendidas se mandan al shader; el conteo baja cuando se apaga una
 		GLuint prog = shaderList[0].getShaderID();
 		mainLight.UseLight(prog);
+		//las luces de la nave parpadean: 0.5 s encendidas y 0.5 s apagadas
+		int parpadeo = (int)(now / 0.5f);
+		bool naveVisible = lucesNaveOn && (parpadeo % 2 == 0);
 		PointLight* puntualesActivas[3];
 		int nPuntuales = 0;
-		if (lucesNaveOn) puntualesActivas[nPuntuales++] = &luzNave;
+		if (naveVisible) puntualesActivas[nPuntuales++] = &luzNave;
 		if (motor1On) puntualesActivas[nPuntuales++] = &luzMotor1;
 		if (motor2On) puntualesActivas[nPuntuales++] = &luzMotor2;
 		for (int i = 0; i < nPuntuales; i++)
 			puntualesActivas[i]->UseLight(prog, i);
 		int nSpots = 0;
-		if (lucesNaveOn) { spotNave.UseLight(prog, 0); nSpots = 1; }
+		if (naveVisible) { spotNave.UseLight(prog, 0); nSpots = 1; }
 		glUniform1i(glGetUniformLocation(prog, "pointLightCount"), nPuntuales);
 		glUniform1i(glGetUniformLocation(prog, "spotLightCount"), nSpots);
 		materialBrillante.UseMaterial(prog);
@@ -237,6 +277,25 @@ int main()
 		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(naveMat));
 		Nave_M.RenderModel();
 
+		//Lamparas ambar de la nave (intermitentes): puntas de las alas y nariz, solo cuando la luz esta encendida
+		if (naveVisible)
+		{
+			shaderList[1].UseShader();
+			uniformModel = shaderList[1].GetModelLocation();
+			glUniformMatrix4fv(shaderList[1].GetProjectionLocation(), 1, GL_FALSE, glm::value_ptr(projection));
+			glUniformMatrix4fv(shaderList[1].GetViewLocation(), 1, GL_FALSE, glm::value_ptr(camera.calculateViewMatrix()));
+			glm::vec3 ambar(1.0f, 0.62f, 0.0f);
+			glUniform3fv(shaderList[1].getColorLocation(), 1, glm::value_ptr(ambar));
+			plainTexture.UseTexture();
+			glm::vec3 lamparas[3] = { glm::vec3(3.65f, -0.14f, -2.7f), glm::vec3(-3.65f, -0.14f, -2.7f), glm::vec3(0.0f, -0.45f, 3.6f) };
+			for (int i = 0; i < 3; i++)
+			{
+				model = glm::translate(naveMat, lamparas[i]);
+				model = glm::scale(model, glm::vec3(0.28f, 0.28f, 0.28f));
+				glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
+				meshListModel[2]->RenderMeshModel();
+			}
+		}
 		//Fuego de los motores (sin luces, con mezcla aditiva)
 		if (motor1On || motor2On)
 		{
